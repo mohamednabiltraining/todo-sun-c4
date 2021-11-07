@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:todo_sun_c4/data/FirebaseUtils.dart';
+import 'package:todo_sun_c4/data/Todo.dart';
 
 class TaskItem extends StatelessWidget {
-  const TaskItem({Key? key}) : super(key: key);
+  Todo item;
+
+  TaskItem(this.item);
 
   @override
   Widget build(BuildContext context) {
@@ -32,10 +36,10 @@ class TaskItem extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Title',
+                          item.title,
                           style: Theme.of(context).textTheme.headline1,
                         ),
-                        Text('Title',
+                        Text(item.description,
                             maxLines: 2,
                             style: Theme.of(context).textTheme.headline2)
                       ],
@@ -80,7 +84,12 @@ class TaskItem extends StatelessWidget {
               ],
             ),
           ),
-          onTap: () {},
+          onTap: () {
+            deleteTask(item)
+                .onError((error, stackTrace) {})
+                .then((value) {})
+                .timeout(Duration(seconds: 30), onTimeout: () {});
+          },
         )
       ],
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:todo_sun_c4/data/FirebaseUtils.dart';
 
 class AddTaskWidget extends StatefulWidget {
   @override
@@ -6,6 +7,11 @@ class AddTaskWidget extends StatefulWidget {
 }
 
 class _AddTaskWidgetState extends State<AddTaskWidget> {
+  var formKey = GlobalKey<FormState>();
+  String title = '';
+  String description = '';
+  DateTime selectedDate = DateTime.now();
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -17,14 +23,39 @@ class _AddTaskWidgetState extends State<AddTaskWidget> {
             'Add New Task',
             textAlign: TextAlign.center,
           ),
-          TextField(
-            decoration: InputDecoration(labelText: 'Title'),
-          ),
-          TextField(
-            minLines: 5,
-            maxLines: 5,
-            decoration: InputDecoration(
-              labelText: 'Details',
+          Form(
+            key: formKey,
+            child: Column(
+              children: [
+                TextFormField(
+                  decoration: InputDecoration(labelText: 'Title'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "please enter todo title";
+                    }
+                    return null;
+                  },
+                  onChanged: (newValue) {
+                    title = newValue;
+                  },
+                ),
+                TextFormField(
+                  minLines: 5,
+                  maxLines: 5,
+                  decoration: InputDecoration(
+                    labelText: 'Details',
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "please enter todo details";
+                    }
+                    return null;
+                  },
+                  onChanged: (newValue) {
+                    description = newValue;
+                  },
+                ),
+              ],
             ),
           ),
           Padding(
@@ -38,23 +69,44 @@ class _AddTaskWidgetState extends State<AddTaskWidget> {
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Text(
-                '12/2/2020',
+                '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
                 textAlign: TextAlign.center,
               ),
             ),
           ),
-          ElevatedButton(onPressed: () {}, child: Text('Add Task'))
+          ElevatedButton(
+              onPressed: () {
+                addTodo();
+              },
+              child: Text('Add Task'))
         ],
       ),
     );
   }
 
-  void showCalendar() {
-    showDatePicker(
+  void addTodo() {
+    if (formKey.currentState!.validate() == true) {
+      // add todo
+      addTodoToFirebase(title, description, selectedDate).then((value) {
+        Navigator.pop(context);
+      }).onError((error, stackTrace) {
+        print(error.toString());
+      }).timeout(Duration(seconds: 30), onTimeout: () {
+        print('timeout');
+      });
+    }
+  }
+
+  void showCalendar() async {
+    var newSelectedDate = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: selectedDate,
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(Duration(days: 365)),
     );
+    if (newSelectedDate != null) {
+      selectedDate = newSelectedDate;
+      setState(() {});
+    }
   }
 }

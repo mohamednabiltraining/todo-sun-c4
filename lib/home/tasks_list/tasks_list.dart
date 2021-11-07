@@ -1,5 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:todo_sun_c4/data/FirebaseUtils.dart';
+import 'package:todo_sun_c4/data/Todo.dart';
 import 'package:todo_sun_c4/home/tasks_list/task_item.dart';
 
 class TasksList extends StatefulWidget {
@@ -53,11 +56,30 @@ class _TasksListState extends State<TasksList> {
             weekendDays: [],
           ),
           Expanded(
-            child: ListView.builder(
-              itemBuilder: (buildContext, index) {
-                return TaskItem();
+            child: StreamBuilder<QuerySnapshot<Todo>>(
+              stream: getTodosRefWithConverter()
+                  .where('dateTime',
+                      isEqualTo:
+                          selectedDay.getDateOnly().millisecondsSinceEpoch)
+                  .snapshots(),
+              builder: (BuildContext context,
+                  AsyncSnapshot<QuerySnapshot<Todo>> snapshot) {
+                if (snapshot.hasError) {
+                  return Text('Error loading todos');
+                } else if (snapshot.connectionState ==
+                    ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                }
+                List<Todo> items = snapshot.data!.docs
+                    .map((oldItem) => oldItem.data())
+                    .toList();
+                return ListView.builder(
+                  itemBuilder: (buildContext, index) {
+                    return TaskItem(items[index]);
+                  },
+                  itemCount: items.length,
+                );
               },
-              itemCount: 10,
             ),
           )
         ],
